@@ -102,7 +102,33 @@ def joinFactors(factors):
 
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # util.raiseNotDefined()
+
+    main = []
+    given = []
+
+    for i in factors:
+        
+        
+        for j in i.unconditionedVariables():
+            if j not in main:
+                main.append(j)
+
+    for i in factors:
+        for j in i.conditionedVariables():
+            if j not in main and j not in given:
+                given.append(j)
+
+
+    output = Factor(main, given, factors[0].variableDomainsDict())
+    for a in output.getAllPossibleAssignmentDicts():
+        p = 1
+
+        for i in factors:
+            p *= i.getProbability(a)
+        output.setProbability(a, p)
+
+    return output
 
 
 def eliminateWithCallTracking(callTrackingList=None):
