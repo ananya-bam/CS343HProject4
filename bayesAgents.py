@@ -141,6 +141,12 @@ def fillYCPT(bayesNet, gameState):
     yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
     "*** YOUR CODE HERE ***"
     # util.raiseNotDefined()
+
+    yFactor.setProbability({Y_POS_VAR: BOTH_TOP_VAL}, PROB_BOTH_TOP)
+    yFactor.setProbability({Y_POS_VAR: BOTH_BOTTOM_VAL}, PROB_BOTH_BOTTOM)
+    yFactor.setProbability({Y_POS_VAR: LEFT_TOP_VAL}, PROB_ONLY_LEFT_TOP)
+    yFactor.setProbability({Y_POS_VAR: LEFT_BOTTOM_VAL}, PROB_ONLY_LEFT_BOTTOM)
+
     bayesNet.setCPT(Y_POS_VAR, yFactor)
 
 def fillHouseCPT(bayesNet, gameState):
@@ -204,8 +210,38 @@ def fillObsCPT(bayesNet, gameState):
 
     bottomLeftPos, topLeftPos, bottomRightPos, topRightPos = gameState.getPossibleHouses()
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # "*** YOUR CODE HERE ***"
+    # util.raiseNotDefined()
+    positions = [(bottomLeftPos, BOTTOM_LEFT_VAL), (topLeftPos, TOP_LEFT_VAL), (bottomRightPos, BOTTOM_RIGHT_VAL), (topRightPos, TOP_RIGHT_VAL)]
+
+    for housePos, houseVal in positions:
+        for obsPos in gameState.getHouseWalls(housePos):
+            var = OBS_VAR_TEMPLATE % obsPos
+            factor = bn.Factor(
+                [var], 
+                [FOOD_HOUSE_VAR, GHOST_HOUSE_VAR], 
+                bayesNet.variableDomainsDict()
+            )
+
+
+            for assignment in factor.getAllPossibleAssignmentDicts():
+                f = assignment[FOOD_HOUSE_VAR]
+                g = assignment[GHOST_HOUSE_VAR]
+                
+                if f == houseVal:
+                    probabilities = {RED_OBS_VAL: PROB_FOOD_RED, BLUE_OBS_VAL: 1 - PROB_FOOD_RED, NO_OBS_VAL: 0}
+                elif g == houseVal:
+                    probabilities = {RED_OBS_VAL: PROB_GHOST_RED, BLUE_OBS_VAL: 1 - PROB_GHOST_RED, NO_OBS_VAL: 0}
+                
+                else:
+                    probabilities = {RED_OBS_VAL: 0, BLUE_OBS_VAL: 0, NO_OBS_VAL: 1}
+
+
+                probability = probabilities[assignment[var]]
+                factor.setProbability(assignment, probability)
+
+
+            bayesNet.setCPT(var, factor)
 
 def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     """
