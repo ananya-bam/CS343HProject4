@@ -256,6 +256,22 @@ def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     (This should be a very short method.)
     """
     "*** YOUR CODE HERE ***"
+    queryFactor = inference.inferenceByVariableElimination(bayesNet, FOOD_HOUSE_VAR, evidence, eliminationOrder)
+    bestProb = float("-inf")
+    bestAssignment = None
+
+    for assignment in queryFactor.getAllPossibleAssignmentDicts():
+        newProb = queryFactor.getProbability(assignment)
+
+        if newProb > bestProb:
+            bestProb = newProb
+            bestAssignment = assignment
+    
+    return bestAssignment
+
+
+
+
     util.raiseNotDefined()
 
 
@@ -356,8 +372,30 @@ class VPIAgent(BayesAgent):
 
         leftExpectedValue = 0
         rightExpectedValue = 0
+        leftFoodProb = 0.0
+        rightFoodProb = 0.0
 
         "*** YOUR CODE HERE ***"
+        queryFactor = inference.inferenceByVariableElimination(self.bayesNet, FOOD_HOUSE_VAR, evidence, eliminationOrder)
+
+        for assignment in queryFactor.getAllPossibleAssignmentDicts():
+            if assignment[FOOD_HOUSE_VAR] == TOP_RIGHT_VAL and assignment[GHOST_HOUSE_VAR] == TOP_LEFT_VAL:
+                rightFoodProb = queryFactor.getProbability(assignment)
+            elif assignment[FOOD_HOUSE_VAR] == TOP_LEFT_VAL and assignment[GHOST_HOUSE_VAR] == TOP_RIGHT_VAL:
+                leftFoodProb = queryFactor.getProbability(assignment)
+
+        # print("leftFoodProb: " + str(leftFoodProb))
+        # print("rightFoodProb: " + str(rightFoodProb))
+        
+        leftExpectedValue = (leftFoodProb * WON_GAME_REWARD) + ( (1-leftFoodProb) * GHOST_COLLISION_REWARD)
+        rightExpectedValue = (rightFoodProb * WON_GAME_REWARD) + ( (1-rightFoodProb) * GHOST_COLLISION_REWARD)
+
+        # print("left expected val: " + str(leftExpectedValue))
+        # print("right exp value: " + str(rightExpectedValue))
+
+        return leftExpectedValue, rightExpectedValue 
+
+
         util.raiseNotDefined()
 
         return leftExpectedValue, rightExpectedValue
@@ -423,10 +461,20 @@ class VPIAgent(BayesAgent):
 
         expectedValue = 0
 
+        dict = self.getExplorationProbsAndOutcomes(evidence)
+
+        for prob, outcome in dict:
+            # print(prob)
+            # print(outcome)
+            expectedValue += prob * max(self.computeEnterValues(outcome, enterEliminationOrder))
+
+        # print(expectedValue)
+        return expectedValue
+    
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
 
-        return expectedValue
+        
 
     def getAction(self, gameState):
 
